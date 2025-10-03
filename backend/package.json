@@ -1,0 +1,32 @@
+{
+  "name": "bingsu-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Bingsu Ordering System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node scripts/seedUsers.js",
+    "seed:users": "node scripts/seedUsers.js",
+    "seed:codes": "node scripts/seedCodes.js",
+    "seed:all": "npm run seed:users && npm run seed:codes",
+    "test:db": "node scripts/testConnection.js"
+  },
+  "dependencies": {
+    "@types/react-dom": "^19.1.11",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.18.0",
+    "mongoose": "^7.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.1",
+    "@types/react": "^19.1.17",
+    "nodemon": "^3.0.1",
+    "typescript": "^5.9.3"
+  }
+}
