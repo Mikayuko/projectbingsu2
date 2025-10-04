@@ -1,4 +1,4 @@
-// src/pages/admin/orders/index.tsx - เพิ่ม Auto-refresh + Notifications
+// src/pages/admin/orders/index.tsx - Real-time + Notifications (ไม่มีเสียง)
 
 'use client';
 

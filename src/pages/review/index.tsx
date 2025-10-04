@@ -346,11 +346,11 @@ export default function ReviewPage() {
                     )}
                   </div>
                   
-                  {/* แสดงว่าสั่งอะไรไป */}
+                  {/* ✅ แสดงว่าสั่งอะไรไป */}
                   {(r.shavedIceFlavor || r.toppings) && (
                     <div className="mb-2 p-2 bg-blue-50 rounded text-xs font-['Iceland']">
                       <span className="text-blue-800">
-                        Ordered: {r.shavedIceFlavor}
+                        🍧 Ordered: <strong>{r.shavedIceFlavor}</strong>
                         {r.toppings && r.toppings.length > 0 && ` + ${r.toppings.join(', ')}`}
                       </span>
                     </div>

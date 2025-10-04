@@ -240,7 +240,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Gallery Preview - แก้ให้แสดงรูปตรงกลางและเพิ่ม Toppings */}
+      {/* ✅ Gallery Preview - รูปตรงกลาง + เพิ่ม Toppings */}
       <div className="max-w-6xl mx-auto px-4 mb-16">
         <h2 className="text-4xl text-[#69806C] font-['Iceland'] mb-8 text-center drop-shadow">
           📸 Our Delicious Creations
