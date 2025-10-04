@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const Order = require('../models/Order');
 const MenuCode = require('../models/MenuCode');
 const User = require('../models/User');
+const Stock = require('../models/Stock');
 const { authenticate, optionalAuth, isAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -27,6 +28,36 @@ router.post('/create', optionalAuth, [
     }
     
     const { menuCode, shavedIce, toppings, specialInstructions } = req.body;
+    
+    // ✅ Check stock availability
+    try {
+      const flavorStock = await Stock.findOne({ 
+        itemType: 'flavor', 
+        name: shavedIce.flavor 
+      });
+      
+      if (!flavorStock || flavorStock.quantity < 1) {
+        return res.status(400).json({ 
+          message: `Sorry, ${shavedIce.flavor} is out of stock` 
+        });
+      }
+
+      // Check toppings stock
+      for (const topping of toppings) {
+        const toppingStock = await Stock.findOne({ 
+          itemType: 'topping', 
+          name: topping.name 
+        });
+        
+        if (!toppingStock || toppingStock.quantity < 1) {
+          return res.status(400).json({ 
+            message: `Sorry, ${topping.name} is out of stock` 
+          });
+        }
+      }
+    } catch (stockError) {
+      console.warn('⚠️ Stock check failed, continuing:', stockError);
+    }
     
     // Validate menu code
     let codeDoc;
@@ -56,6 +87,14 @@ router.post('/create', optionalAuth, [
       console.log('❌ Menu code expired:', menuCode);
       return res.status(400).json({ 
         message: 'Menu code has expired' 
+      });
+    }
+    
+    // ✅ Check if code usage limit reached
+    if (codeDoc.usageCount >= codeDoc.maxUsage) {
+      console.log('❌ Menu code usage limit reached:', menuCode);
+      return res.status(400).json({ 
+        message: 'Menu code usage limit reached (maximum 5 orders per code)' 
       });
     }
     
@@ -120,12 +159,31 @@ router.post('/create', optionalAuth, [
       });
     }
     
+    // ✅ Reduce stock
+    try {
+      await Stock.reduceStock('flavor', shavedIce.flavor, 1);
+      for (const topping of toppings) {
+        await Stock.reduceStock('topping', topping.name, 1);
+      }
+      console.log('✅ Stock reduced successfully');
+    } catch (stockError) {
+      console.error('⚠️ Error reducing stock:', stockError);
+    }
+    
+    // ✅ Update menu code usage count
+    try {
+      await MenuCode.validateAndUse(menuCode, order._id);
+      console.log('✅ Menu code usage updated');
+    } catch (codeError) {
+      console.error('⚠️ Error updating code usage:', codeError);
+    }
+    
     // ✅ หมดอายุโค้ดทันทีหลังสั่งเสร็จและจ่ายเงินแล้ว
     try {
       await MenuCode.expireCode(menuCode);
       console.log('✅ Menu code expired after order completed');
-    } catch (codeError) {
-      console.error('⚠️ Error expiring code:', codeError);
+    } catch (expireError) {
+      console.error('⚠️ Error expiring code:', expireError);
     }
     
     res.status(201).json({

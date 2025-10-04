@@ -25,6 +25,10 @@ const stockSchema = new mongoose.Schema({
     type: Number,
     default: 20
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
   lastRestocked: {
     type: Date,
     default: Date.now
@@ -72,11 +76,49 @@ stockSchema.statics.addStock = async function(itemType, name, amount) {
   return stock;
 };
 
+// ✅ ตั้งค่าสต๊อก (สำหรับ admin ปรับจำนวน)
+stockSchema.statics.setStock = async function(itemType, name, quantity, reorderLevel, isActive) {
+  let stock = await this.findOne({ itemType, name });
+  
+  if (!stock) {
+    stock = new this({
+      itemType,
+      name,
+      quantity,
+      reorderLevel: reorderLevel || 20,
+      isActive: isActive !== undefined ? isActive : true
+    });
+  } else {
+    stock.quantity = quantity;
+    if (reorderLevel !== undefined) stock.reorderLevel = reorderLevel;
+    if (isActive !== undefined) stock.isActive = isActive;
+    stock.lastRestocked = new Date();
+  }
+  
+  await stock.save();
+  return stock;
+};
+
 // เช็คสต๊อกใกล้หมด
 stockSchema.statics.getLowStockItems = async function() {
   return this.find({
     $expr: { $lte: ['$quantity', '$reorderLevel'] }
   });
+};
+
+// ✅ เช็คว่าสินค้ายังมีอยู่และ active หรือไม่
+stockSchema.statics.isAvailable = async function(itemType, name) {
+  const stock = await this.findOne({ itemType, name });
+  return stock && stock.isActive && stock.quantity > 0;
+};
+
+// ✅ ดึงรายการสินค้าที่พร้อมขาย
+stockSchema.statics.getAvailableItems = async function(itemType) {
+  return this.find({
+    itemType,
+    isActive: true,
+    quantity: { $gt: 0 }
+  }).sort('name');
 };
 
 module.exports = mongoose.model('Stock', stockSchema);

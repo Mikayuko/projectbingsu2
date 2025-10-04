@@ -82,7 +82,7 @@ menuCodeSchema.statics.createCode = async function(cupSize, createdBy) {
   return menuCode.save();
 };
 
-// Validate and use code - allow multiple orders
+// ✅ Validate and use code - allow multiple orders
 menuCodeSchema.statics.validateAndUse = async function(code, orderId) {
   const menuCode = await this.findOne({ 
     code: code.toUpperCase()
@@ -108,6 +108,16 @@ menuCodeSchema.statics.validateAndUse = async function(code, orderId) {
   
   await menuCode.save();
   return menuCode;
+};
+
+// ✅ NEW: Expire code immediately after order + payment
+menuCodeSchema.statics.expireCode = async function(code) {
+  const menuCode = await this.findOne({ code: code.toUpperCase() });
+  
+  if (menuCode) {
+    menuCode.expiresAt = new Date(); // Set to now (expired)
+    await menuCode.save();
+  }
 };
 
 // Check if code can still be used
