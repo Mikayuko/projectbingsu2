@@ -182,16 +182,13 @@ router.post('/initialize', authenticate, isAdmin, async (req, res) => {
       { itemType: 'flavor', name: 'Strawberry', quantity: 100, reorderLevel: 20 },
       { itemType: 'flavor', name: 'Thai Tea', quantity: 100, reorderLevel: 20 },
       { itemType: 'flavor', name: 'Matcha', quantity: 100, reorderLevel: 20 },
-      { itemType: 'flavor', name: 'Milk', quantity: 100, reorderLevel: 20 },
-      { itemType: 'flavor', name: 'Green Tea', quantity: 100, reorderLevel: 20 },
+     
       // Toppings
       { itemType: 'topping', name: 'Apple', quantity: 100, reorderLevel: 20 },
       { itemType: 'topping', name: 'Cherry', quantity: 100, reorderLevel: 20 },
       { itemType: 'topping', name: 'Blueberry', quantity: 100, reorderLevel: 20 },
       { itemType: 'topping', name: 'Raspberry', quantity: 100, reorderLevel: 20 },
       { itemType: 'topping', name: 'Strawberry', quantity: 100, reorderLevel: 20 },
-      { itemType: 'topping', name: 'Banana', quantity: 100, reorderLevel: 20 },
-      { itemType: 'topping', name: 'Mango', quantity: 100, reorderLevel: 20 },
     ];
     
     const results = [];
