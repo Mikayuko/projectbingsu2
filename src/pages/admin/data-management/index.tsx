@@ -57,8 +57,6 @@ export default function DataManagementPage() {
       { name: 'Strawberry', price: 60, active: true },
       { name: 'Thai Tea', price: 60, active: true },
       { name: 'Matcha', price: 60, active: true },
-      { name: 'Milk', price: 60, active: true },
-      { name: 'Green Tea', price: 60, active: true },
     ],
     toppings: [
       { name: 'Apple', price: 10, active: true },
@@ -66,8 +64,6 @@ export default function DataManagementPage() {
       { name: 'Blueberry', price: 10, active: true },
       { name: 'Raspberry', price: 10, active: true },
       { name: 'Strawberry', price: 10, active: true },
-      { name: 'Banana', price: 10, active: true },
-      { name: 'Mango', price: 10, active: true },
     ],
     sizes: [
       { size: 'S', price: 0 },
@@ -199,6 +195,21 @@ export default function DataManagementPage() {
     }
   };
 
+  const handleRestockItem = async (stockId: string, itemName: string, currentQty: number) => {
+    if (!confirm(`Restock ${itemName}?\nCurrent: ${currentQty}`)) return;
+    
+    setStockLoading(true);
+    try {
+      const result = await api.restockItem(stockId);
+      alert(`✅ ${result.message}`);
+      await loadStockData();
+    } catch (error) {
+      console.error('Failed to restock:', error);
+      alert('Failed to restock item');
+    } finally {
+      setStockLoading(false);
+    }
+  };
   const loadAllUsers = async () => {
     try {
       const filters: any = {};
@@ -693,13 +704,13 @@ export default function DataManagementPage() {
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl text-[#69806C] font-['Iceland']">📦 Stock Inventory</h3>
                 <div className="flex gap-3">
-                  <button
+                  {/* <button
                     onClick={handleInitializeStock}
                     disabled={stockLoading}
                     className="px-4 py-2 bg-blue-500 text-white rounded font-['Iceland'] hover:bg-blue-600 transition disabled:opacity-50"
                   >
                     🔧 Initialize Stock
-                  </button>
+                  </button> */}
                   <button
                     onClick={exportStockCSV}
                     disabled={stockItems.length === 0}
@@ -761,7 +772,7 @@ export default function DataManagementPage() {
                     <tbody>
                       {stockItems.map((item) => (
                         <tr key={item._id} className={`border-b hover:bg-gray-50 ${
-                          item.quantity <= item.reorderLevel ? 'bg-red-50' : ''
+                          item.quantity < item.reorderLevel ? 'bg-red-50' : ''
                         }`}>
                           <td className="py-3 px-4">
                             <span className={`px-2 py-1 rounded text-sm font-['Iceland'] ${
@@ -774,13 +785,13 @@ export default function DataManagementPage() {
                           </td>
                           <td className="py-3 px-4 font-['Iceland'] font-bold">
                             {item.name}
-                            {item.quantity <= item.reorderLevel && (
+                            {item.quantity < item.reorderLevel && (
                               <span className="ml-2 text-red-600">⚠️</span>
                             )}
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className={`font-['Iceland'] text-lg font-bold ${
-                              item.quantity <= item.reorderLevel ? 'text-red-600' : 'text-gray-800'
+                              item.quantity < item.reorderLevel ? 'text-red-600' : 'text-gray-800'
                             }`}>
                               {item.quantity}
                             </span>
@@ -804,20 +815,30 @@ export default function DataManagementPage() {
                             {new Date(item.lastRestocked).toLocaleDateString('th-TH')}
                           </td>
                           <td className="py-3 px-4">
-                            <div className="flex gap-2 justify-center">
-                              
-                              <button
-                                onClick={() => {
-                                  setEditingStock(item);
-                                  setShowStockModal(true);
-                                }}
-                                disabled={stockLoading}
-                                className="px-5 py-3 bg-blue-500 text-white rounded text-sm font-['Iceland'] hover:bg-blue-600 disabled:opacity-50"
-                              >
-                                Edit
-                              </button>
-                            </div>
-                          </td>
+                          <div className="flex gap-2 justify-center flex-wrap">
+                            {/* ✅ ปุ่ม Restock */}
+                            <button
+                              onClick={() => handleRestockItem(item._id, item.name, item.quantity)}
+                              disabled={stockLoading}
+                              className="px-3 py-2 bg-green-500 text-white rounded text-sm font-['Iceland'] hover:bg-green-600 disabled:opacity-50 flex items-center gap-1"
+                            >
+                          
+                              <span>Restock</span>
+                            </button>
+                            
+                            {/* ปุ่ม Edit */}
+                            <button
+                              onClick={() => {
+                                setEditingStock(item);
+                                setShowStockModal(true);
+                              }}
+                              disabled={stockLoading}
+                              className="px-3 py-2 bg-blue-500 text-white rounded text-sm font-['Iceland'] hover:bg-blue-600 disabled:opacity-50"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </td>
                         </tr>
                       ))}
                     </tbody>

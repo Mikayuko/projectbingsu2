@@ -69,6 +69,7 @@ const handleApiError = async (response: Response) => {
 
 // API class for all backend calls
 class BingsuAPI {
+  
   // Auth endpoints
   async register(data: { fullName: string; email: string; password: string; confirmPassword: string }) {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -387,6 +388,16 @@ class BingsuAPI {
         ...getAuthHeaders()
       },
       body: JSON.stringify({ adjustment })
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
+
+  async restockItem(stockId: string) {
+    const response = await fetch(`${API_BASE_URL}/stock/${stockId}/restock`, {
+      method: 'PUT',
+      headers: getAuthHeaders()
     });
     
     await handleApiError(response);

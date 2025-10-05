@@ -35,6 +35,8 @@ export default function HomePage() {
   const [stockStatus, setStockStatus] = useState<StockStatus>({ totalItems: 0, lowStock: 0, outOfStock: 0 });
   const [totalOrders, setTotalOrders] = useState(0);
   const [activeCodes, setActiveCodes] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   useEffect(() => {
     fetchAllData();
@@ -78,14 +80,19 @@ export default function HomePage() {
   };
 
   const fetchRecentReviews = async () => {
-    try {
-      const result = await api.getReviews(1, 3);
-      setRecentReviews(result.reviews || []);
-    } catch (error) {
-      console.error('Failed to fetch reviews:', error);
-      setRecentReviews([]);
+  try {
+    const result = await api.getReviews(1, 3);
+    setRecentReviews(result.reviews || []);
+    // ✅ อัพเดท rating จริงจาก database
+    if (result.stats) {
+      setAverageRating(result.stats.average || 0);
+      setTotalReviews(result.totalReviews || 0);
     }
-  };
+  } catch (error) {
+    console.error('Failed to fetch reviews:', error);
+    setRecentReviews([]);
+  }
+};
 
   const fetchStockStatus = async () => {
     try {
@@ -170,9 +177,11 @@ export default function HomePage() {
               </p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg">
-              <span className="text-white font-['Iceland'] text-sm">⭐ Rating</span>
-              <p className="text-white font-bold text-xl">4.9/5</p>
-            </div>
+  <span className="text-white font-['Iceland'] text-sm">⭐ Rating</span>
+  <p className="text-white font-bold text-xl">
+    {averageRating > 0 ? averageRating.toFixed(1) : '—'}/5
+  </p>
+</div>
           </div>
           
           {/* Special Offer Badge */}
