@@ -102,7 +102,7 @@ stockSchema.statics.setStock = async function(itemType, name, quantity, reorderL
 // เช็คสต๊อกใกล้หมด
 stockSchema.statics.getLowStockItems = async function() {
   return this.find({
-    $expr: { $lte: ['$quantity', '$reorderLevel'] }
+    $expr: { $lt: ['$quantity', '$reorderLevel'] }
   });
 };
 

@@ -175,23 +175,28 @@ router.delete('/:id', authenticate, isAdmin, async (req, res) => {
 });
 
 // POST /api/stock/initialize - สร้างสต๊อกเริ่มต้น (สำหรับ setup ครั้งแรก)
+// POST /api/stock/initialize - เติมสต๊อกตาม reorder level
+// POST /api/stock/initialize - เติมสต๊อกตามจำนวน reorder level
 router.post('/initialize', authenticate, isAdmin, async (req, res) => {
   try {
     const defaultStock = [
       // Flavors
-      { itemType: 'flavor', name: 'Strawberry', quantity: 100, reorderLevel: 20 },
-      { itemType: 'flavor', name: 'Thai Tea', quantity: 100, reorderLevel: 20 },
-      { itemType: 'flavor', name: 'Matcha', quantity: 100, reorderLevel: 20 },
+      { itemType: 'flavor', name: 'Strawberry', quantity: 50, reorderLevel: 20 },
+      { itemType: 'flavor', name: 'Thai Tea', quantity: 50, reorderLevel: 20 },
+      { itemType: 'flavor', name: 'Matcha', quantity: 50, reorderLevel: 20 },
      
       // Toppings
-      { itemType: 'topping', name: 'Apple', quantity: 100, reorderLevel: 20 },
-      { itemType: 'topping', name: 'Cherry', quantity: 100, reorderLevel: 20 },
-      { itemType: 'topping', name: 'Blueberry', quantity: 100, reorderLevel: 20 },
-      { itemType: 'topping', name: 'Raspberry', quantity: 100, reorderLevel: 20 },
-      { itemType: 'topping', name: 'Strawberry', quantity: 100, reorderLevel: 20 },
+      { itemType: 'topping', name: 'Apple', quantity: 50, reorderLevel: 20 },
+      { itemType: 'topping', name: 'Cherry', quantity: 50, reorderLevel: 20 },
+      { itemType: 'topping', name: 'Blueberry', quantity: 50, reorderLevel: 20 },
+      { itemType: 'topping', name: 'Raspberry', quantity: 50, reorderLevel: 20 },
+      { itemType: 'topping', name: 'Strawberry', quantity: 50, reorderLevel: 20 },
     ];
     
-    const results = [];
+    let created = 0; 
+    let restocked = 0;
+    let totalAdded = 0;
+    
     for (const item of defaultStock) {
       const existing = await Stock.findOne({ 
         itemType: item.itemType, 
@@ -199,18 +204,56 @@ router.post('/initialize', authenticate, isAdmin, async (req, res) => {
       });
       
       if (!existing) {
-        const stock = await Stock.create(item);
-        results.push(stock);
+        // สร้างใหม่ให้เต็ม 100
+        await Stock.create(item);
+        created++;
+      } else if (existing.quantity <= existing.reorderLevel) {
+        // ✅ เติมเพิ่มตามจำนวน reorder level
+        // เช่น: เหลือ 5, reorder = 20 → เป็น 25 (5 + 20)
+        const amountToAdd = existing.reorderLevel;
+        existing.quantity += amountToAdd;
+        existing.lastRestocked = new Date();
+        await existing.save();
+        restocked++;
+        totalAdded += amountToAdd;
       }
     }
     
     res.json({
-      message: `Initialized ${results.length} stock items`,
-      created: results.length
+      message: `Created ${created} items, Restocked ${restocked} items (added ${totalAdded} total)`,
+      created,
+      restocked,
+      totalAdded
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to initialize stock', error: error.message });
   }
 });
 
+// PUT /api/stock/:id/restock - เติมสต๊อกแต่ละรายการ
+router.put('/:id/restock', authenticate, isAdmin, async (req, res) => {
+  try {
+    const stock = await Stock.findById(req.params.id);
+    
+    if (!stock) {
+      return res.status(404).json({ message: 'Stock item not found' });
+    }
+    
+    const oldQuantity = stock.quantity;
+    const amountToAdd = stock.reorderLevel;
+    stock.quantity += amountToAdd;
+    stock.lastRestocked = new Date();
+    await stock.save();
+    
+    res.json({
+      message: `Restocked ${stock.name}: ${oldQuantity} → ${stock.quantity} (+${amountToAdd})`,
+      stock,
+      oldQuantity,
+      newQuantity: stock.quantity,
+      added: amountToAdd
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to restock', error: error.message });
+  }
+});
 module.exports = router;
