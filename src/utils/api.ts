@@ -1,4 +1,4 @@
-// src/utils/api.ts - Full MongoDB Integration (No localStorage for data)
+// src/utils/api.ts - Updated with Stock Management Functions
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -350,11 +350,119 @@ class BingsuAPI {
     await handleApiError(response);
     return response.json();
   }
+
+  // ✅ Stock Management endpoints
+  async getStock() {
+    const response = await fetch(`${API_BASE_URL}/stock`, {
+      headers: getAuthHeaders()
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
+
+  async updateStock(stockId: string, data: {
+    quantity?: number;
+    reorderLevel?: number;
+    isActive?: boolean;
+  }) {
+    const response = await fetch(`${API_BASE_URL}/stock/${stockId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(data)
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
+
+  async adjustStock(stockId: string, adjustment: number) {
+    const response = await fetch(`${API_BASE_URL}/stock/${stockId}/adjust`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({ adjustment })
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
+
+  async setStock(itemType: 'flavor' | 'topping', name: string, quantity: number, reorderLevel?: number, isActive?: boolean) {
+    const response = await fetch(`${API_BASE_URL}/stock`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({ itemType, name, quantity, reorderLevel, isActive })
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
+
+  async getLowStock() {
+    const response = await fetch(`${API_BASE_URL}/stock/low`, {
+      headers: getAuthHeaders()
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
+
+  async getAvailableItems(itemType: 'flavor' | 'topping') {
+    const response = await fetch(`${API_BASE_URL}/stock/available/${itemType}`, {
+      headers: getAuthHeaders()
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
+
+  async checkAvailability(itemType: 'flavor' | 'topping', name: string) {
+    const response = await fetch(`${API_BASE_URL}/stock/check-availability`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({ itemType, name })
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
+
+  async deleteStock(stockId: string) {
+    const response = await fetch(`${API_BASE_URL}/stock/${stockId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
+
+  async initializeStock() {
+    const response = await fetch(`${API_BASE_URL}/stock/initialize`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  }
 }
 
 export const api = new BingsuAPI();
 
-// Utility functions for auth state (localStorage only for session)
+// Utility functions for auth state
 export const isAuthenticated = () => {
   if (typeof window === 'undefined') return false;
   return !!localStorage.getItem('token');
